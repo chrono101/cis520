@@ -3,6 +3,7 @@
 #include <inttypes.h>
 #include <round.h>
 #include <stdio.h>
+#include <lib/stdbool.h>
 #include "devices/pit.h"
 #include "threads/interrupt.h"
 #include "threads/synch.h"
@@ -30,6 +31,8 @@ static void busy_wait (int64_t loops);
 static void real_time_sleep (int64_t num, int32_t denom);
 static void real_time_delay (int64_t num, int32_t denom);
 
+static struct list wait_list;
+
 /* Sets up the timer to interrupt TIMER_FREQ times per second,
    and registers the corresponding interrupt. */
 void
@@ -37,6 +40,7 @@ timer_init (void)
 {
   pit_configure_channel (0, 2, TIMER_FREQ);
   intr_register_ext (0x20, timer_interrupt, "8254 Timer");
+  list_init(&wait_list);
 }
 
 /* Calibrates loops_per_tick, used to implement brief delays. */
@@ -84,16 +88,34 @@ timer_elapsed (int64_t then)
   return timer_ticks () - then;
 }
 
+/* Compares two threads' wakeup times */
+bool 
+compare_threads_by_wakeup_time(const struct list_elem *a_, const struct list_elem *b_, void *aux) 
+{
+  const struct thread *a = list_entry (a_, struct thread, elem);
+  const struct thread *b = list_entry (b_, struct thread, elem);
+
+  return (a->wakeup_time) < (b->wakeup_time);
+}
+
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
    be turned on. */
 void
 timer_sleep (int64_t ticks) 
 {
-  int64_t start = timer_ticks ();
+  int64_t start = timer_ticks (); 
+  struct thread *cur = thread_current ();
+  
+  cur->wakeup_time = start + ticks;
 
   ASSERT (intr_get_level () == INTR_ON);
-  while (timer_elapsed (start) < ticks) 
-    thread_yield ();
+
+  intr_disable ();
+  list_insert_ordered (&wait_list, &cur->wait_elem, compare_threads_by_wakeup_time, NULL);
+  intr_enable ();
+ 
+  // Lastly block ourselves
+  sema_down(&cur->wait_sema);
 }
 
 /* Sleeps for approximately MS milliseconds.  Interrupts must be
@@ -172,6 +194,18 @@ timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
   thread_tick ();
+  
+  struct list_elem *e;
+  for (e = list_begin (&wait_list); e != list_end (&wait_list); e = list_next (e)) 
+  {
+    struct thread *cur = list_entry(e, struct thread, wait_elem);
+    if (cur->wakeup_time >= ticks) {
+      sema_up(&cur->wait_sema); // Lift the semaphore
+      //thread_yield ();  // Yield to that thread
+      list_pop_front(&wait_list); // Remove the thread from the waitlist
+    }
+  }
+
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer

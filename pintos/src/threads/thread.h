@@ -4,6 +4,7 @@
 #include <debug.h>
 #include <list.h>
 #include <stdint.h>
+#include "synch.h"
 
 /* States in a thread's life cycle. */
 enum thread_status
@@ -89,9 +90,13 @@ struct thread
     uint8_t *stack;                     /* Saved stack pointer. */
     int priority;                       /* Priority. */
     struct list_elem allelem;           /* List element for all threads list. */
+    int64_t wakeup_time;                /* Time to wakeup the thread */
+    struct semaphore wait_sema;         /* Semaphore for thread blocking */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
+
+    struct list_elem wait_elem;         /* List element for wait list */
 
 #ifdef USERPROG
     /* Owned by userprog/process.c. */
