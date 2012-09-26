@@ -95,7 +95,7 @@ compare_threads_by_wakeup_time(const struct list_elem *a_, const struct list_ele
   const struct thread *a = list_entry (a_, struct thread, elem);
   const struct thread *b = list_entry (b_, struct thread, elem);
 
-  return (a->wakeup_time) < (b->wakeup_time);
+  return (a->wakeup_time > b->wakeup_time);
 }
 
 /* Sleeps for approximately TICKS timer ticks.  Interrupts must
@@ -113,7 +113,7 @@ timer_sleep (int64_t ticks)
   intr_disable ();
   list_insert_ordered (&wait_list, &cur->wait_elem, compare_threads_by_wakeup_time, NULL);
   intr_enable ();
- 
+  
   // Lastly block ourselves
   sema_down(&cur->wait_sema);
 }
@@ -187,25 +187,39 @@ timer_print_stats (void)
 {
   printf ("Timer: %"PRId64" ticks\n", timer_ticks ());
 }
-
+
 /* Timer interrupt handler. */
 static void
 timer_interrupt (struct intr_frame *args UNUSED)
 {
   ticks++;
-  thread_tick ();
-  
+  thread_tick();
+
   struct list_elem *e;
-  for (e = list_begin (&wait_list); e != list_end (&wait_list); e = list_next (e)) 
-  {
+  int i = 0;
+  if (!list_empty(&wait_list)) {
+    printf("===== Checking the Waitlist =====\n"); 
+    e = list_front(&wait_list);
+  }
+  while (!list_empty(&wait_list)) {
     struct thread *cur = list_entry(e, struct thread, wait_elem);
-    if (cur->wakeup_time >= ticks) {
+    printf("[%d] Wakeup: %lld. Ticks: %lld\n", i, cur->wakeup_time, ticks);
+    if (cur->wakeup_time <= ticks) {
+      printf("[%d] Thread needs woken up!\n", i);
+      printf("[%d] Lifting Semaphore!\n", i);
       sema_up(&cur->wait_sema); // Lift the semaphore
-      //thread_yield ();  // Yield to that thread
-      list_pop_front(&wait_list); // Remove the thread from the waitlist
+      printf("[%d] Removing thread from wait list!\n");
+      list_remove(e); // Remove the thread from the waitlist 
+      e = list_front(&wait_list);
+    } else {
+      e = list_next(e);
+    }
+    i++;
+    if (e == list_end(&wait_list)) {
+      break;
     }
   }
-
+  // Yield to the highest priority thread now running
 }
 
 /* Returns true if LOOPS iterations waits for more than one timer
