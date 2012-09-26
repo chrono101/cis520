@@ -197,19 +197,19 @@ timer_interrupt (struct intr_frame *args UNUSED)
 
   struct list_elem *e;
   if (!list_empty(&wait_list)) {
-    e = list_front(&wait_list);
+    e = list_front(&wait_list); // Get the head element
   }
   while (!list_empty(&wait_list)) {
     struct thread *cur = list_entry(e, struct thread, wait_elem);
     if (cur->wakeup_time <= ticks) {
       sema_up(&cur->wait_sema); // Lift the semaphore
       list_remove(e); // Remove the thread from the waitlist 
-      e = list_next(e);
+      e = list_next(e); // Iterate to the next list element
     } else {
-      e = list_next(e);
+      e = list_next(e); // Iterate to the next list element
     }
     if (e == list_end(&wait_list)) {
-      break;
+      break; // If we are at the end of the list, break
     }
   }
   // Yield to the highest priority thread now running
