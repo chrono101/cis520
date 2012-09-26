@@ -196,25 +196,18 @@ timer_interrupt (struct intr_frame *args UNUSED)
   thread_tick();
 
   struct list_elem *e;
-  int i = 0;
   if (!list_empty(&wait_list)) {
-    printf("===== Checking the Waitlist =====\n"); 
     e = list_front(&wait_list);
   }
   while (!list_empty(&wait_list)) {
     struct thread *cur = list_entry(e, struct thread, wait_elem);
-    printf("[%d] Wakeup: %lld. Ticks: %lld\n", i, cur->wakeup_time, ticks);
     if (cur->wakeup_time <= ticks) {
-      printf("[%d] Thread needs woken up!\n", i);
-      printf("[%d] Lifting Semaphore!\n", i);
       sema_up(&cur->wait_sema); // Lift the semaphore
-      printf("[%d] Removing thread from wait list!\n");
       list_remove(e); // Remove the thread from the waitlist 
-      e = list_front(&wait_list);
+      e = list_next(e);
     } else {
       e = list_next(e);
     }
-    i++;
     if (e == list_end(&wait_list)) {
       break;
     }
