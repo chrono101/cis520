@@ -35,7 +35,10 @@ static struct thread *idle_thread;
 static struct thread *initial_thread;
 
 /* Lock used by allocate_tid(). */
-static struct lock tid_lock;
+static struct lock tid_lock; 
+
+/* List of donors for this thread */
+struct list donors;
 
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
@@ -638,14 +641,16 @@ compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *
 /* Recomputes the priority for locking and such 
  */
 void thread_recompute_priority(struct thread *t) {
-  int old_priority = t->priority;
-  int donor_max; // TODO: Should be the max of t->donors
+  int old_priority = t->priority; 
+  int donor_max = list_entry (list_max (&donors,compare_threads_by_priority, NULL), struct thread, elem)->priority;
 
-  // TODO: make this work
-  /* t-> priority = max(t->original_priority, donor_max);
-     if(t->priority > old_priority && t>donee != NULL) {
+  if (t->original_priority > donor_max) {
+    t->priority = t->original_priority;
+  } else {
+    t->priority = donor_max;
+  }
+
+  if (t->priority > old_priority && t->donee != NULL) {
      thread_recompute_priority(t->donee);
-     }
-     */
-  
+  } 
 }

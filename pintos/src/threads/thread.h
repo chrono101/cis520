@@ -93,22 +93,12 @@ struct thread
     struct list_elem allelem;           /* List element for all threads list. */
     int64_t wakeup_time;                /* Time to wakeup the thread */
     struct semaphore wait_sema;         /* Semaphore for thread blocking */
-<<<<<<< HEAD
     struct list_elem donor_list_elem;   /* List of donors */
-    static struct list donors;		      /* List of threads */
     struct thread* donee;		            /* Thread you have donated to */ 
     struct lock* want_lock; 		        /* Lock we want to acquire */
-=======
-    struct list_elem donor_list_elem;   /* Donor */
-    static struct list donors;		/* List of donor threads */
-    struct thread *donee;		/* Thread you have donated to */ 
-    struct lock *want_lock; 		/* Lock we want to acquire */
->>>>>>> 58fe8ccd6ef834609decdd31559a5ff01ba9034b
-
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
-
     struct list_elem wait_elem;         /* List element for wait list */
 
 #ifdef USERPROG
