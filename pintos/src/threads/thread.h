@@ -93,7 +93,8 @@ struct thread
     struct list_elem allelem;           /* List element for all threads list. */
     int64_t wakeup_time;                /* Time to wakeup the thread */
     struct semaphore wait_sema;         /* Semaphore for thread blocking */
-    struct list_elem donor_list_elem;   /* List of donors */
+    struct list_elem donor_elem;        /* List element for donor list */
+    struct list donors;                 /* List of donors for this thread */
     struct thread* donee;		            /* Thread you have donated to */ 
     struct lock* want_lock; 		        /* Lock we want to acquire */
 
@@ -149,5 +150,7 @@ int thread_get_load_avg (void);
 
 bool compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *b_, void *aux);
 void thread_recompute_priority(struct thread *t);
+void thread_donate_priority(struct thread *t);
+
 
 #endif /* threads/thread.h */
