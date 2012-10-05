@@ -247,12 +247,13 @@ thread_unblock (struct thread *t)
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
   list_push_back (&ready_list, &t->elem);
-  t->status = THREAD_READY;
+  t->status = THREAD_READY; 
   intr_set_level (old_level);
-
-  if (cur->priority < t->priority) {
+  
+  if (cur != idle_thread && cur->priority < t->priority) {
     thread_yield_to_higher_priority();
   }
+
 }
 
 
@@ -264,14 +265,13 @@ thread_yield_to_higher_priority (void)
   enum intr_level old_level = intr_disable ();
   if (!list_empty (&ready_list)) {
     struct thread *cur = thread_current ();
-    struct thread *max = list_entry (list_max (&ready_list,
-          compare_threads_by_priority, NULL), struct thread, elem);
+    struct thread *max = list_entry (list_max (&ready_list,compare_threads_by_priority, NULL), struct thread, elem);
     if (max->priority > cur->priority) {
       if (intr_context ()) {
         intr_yield_on_return ();
       }
       else {
-        //thread_yield ();
+        thread_yield ();
       }
     }
   }
@@ -343,12 +343,13 @@ thread_yield (void)
   enum intr_level old_level;
   
   ASSERT (!intr_context ());
-
+  
   old_level = intr_disable ();
-  if (cur != idle_thread) 
+  if (cur != idle_thread) {
     list_push_back (&ready_list, &cur->elem);
+  }
   cur->status = THREAD_READY;
-  schedule ();
+  schedule (); 
   intr_set_level (old_level);
 }
 
@@ -525,12 +526,11 @@ alloc_frame (struct thread *t, size_t size)
 static struct thread *
 next_thread_to_run (void) 
 {
-  if (list_empty (&ready_list))
+  if (list_empty (&ready_list)) {
     return idle_thread;
+  }
   else {
-    //return list_entry (list_pop_front (&ready_list), struct thread, elem);
     struct thread *max = list_entry (list_max (&ready_list, compare_threads_by_priority, NULL), struct thread, elem);
-    // TODO: Not sure if needed
     list_remove(list_max(&ready_list, compare_threads_by_priority, NULL));
     return max;
   }
