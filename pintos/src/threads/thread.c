@@ -375,6 +375,7 @@ void
 thread_set_priority (int new_priority) 
 {
   thread_current ()->priority = new_priority;
+  thread_current ()->original_priority = new_priority;
 }
 
 /* Returns the current thread's priority. */
@@ -633,3 +634,17 @@ compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *
   return (a->priority < b->priority);
 }
 
+/* Recomputes the priority for locking and such 
+ */
+void thread_recompute_priority(struct thread *t) {
+  int old_priority = t->priority;
+  int donor_max; // TODO: Should be the max of t->donors
+
+  // TODO: make this work
+  /* t-> priority = max(t->original_priority, donor_max);
+     if(t->priority > old_priority && t>donee != NULL) {
+     thread_recompute_priority(t->donee);
+     }
+     */
+  
+}
