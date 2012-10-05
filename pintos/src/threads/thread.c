@@ -239,16 +239,46 @@ thread_block (void)
 void
 thread_unblock (struct thread *t) 
 {
+  struct thread *cur = thread_current ();
   enum intr_level old_level;
 
   ASSERT (is_thread (t));
-
+  
   old_level = intr_disable ();
   ASSERT (t->status == THREAD_BLOCKED);
   list_push_back (&ready_list, &t->elem);
   t->status = THREAD_READY;
   intr_set_level (old_level);
+
+  if (cur->priority < t->priority) {
+    thread_yield_to_higher_priority();
+  }
 }
+
+
+/* If the ready list contains a thread with a higher priority,
+ * yields to it. */
+void 
+thread_yield_to_higher_priority (void)
+{
+  enum intr_level old_level = intr_disable ();
+  if (!list_empty (&ready_list)) {
+    struct thread *cur = thread_current ();
+    struct thread *max = list_entry (list_max (&ready_list,
+          compare_threads_by_priority, NULL), struct thread, elem);
+    if (max->priority > cur->priority) {
+      if (intr_context ()) {
+        intr_yield_on_return ();
+      }
+      else {
+        //thread_yield ();
+      }
+    }
+  }
+  intr_set_level (old_level);
+}
+
+
 
 /* Returns the name of the running thread. */
 const char *
@@ -497,8 +527,13 @@ next_thread_to_run (void)
 {
   if (list_empty (&ready_list))
     return idle_thread;
-  else
-    return list_entry (list_pop_front (&ready_list), struct thread, elem);
+  else {
+    //return list_entry (list_pop_front (&ready_list), struct thread, elem);
+    struct thread *max = list_entry (list_max (&ready_list, compare_threads_by_priority, NULL), struct thread, elem);
+    // TODO: Not sure if needed
+    list_remove(list_max(&ready_list, compare_threads_by_priority, NULL));
+    return max;
+  }
 }
 
 /* Completes a thread switch by activating the new thread's page
@@ -583,7 +618,7 @@ allocate_tid (void)
 
   return tid;
 }
-
+
 /* Offset of `stack' member within `struct thread'.
    Used by switch.S, which can't figure it out on its own. */
 uint32_t thread_stack_ofs = offsetof (struct thread, stack);
