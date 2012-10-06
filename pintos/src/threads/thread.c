@@ -382,9 +382,10 @@ thread_set_priority (int new_priority)
   if (new_priority > thread_current()->priority) {
     thread_current ()->priority = new_priority;
   }
-
   // Set the new base priority
   thread_current ()->original_priority = new_priority;
+
+ 
 }
 
 /* Returns the current thread's priority. */
@@ -659,7 +660,7 @@ void thread_recompute_priority(struct thread *t) {
   }
 
   if (t->priority > old_priority && t->donee != NULL) {
-     thread_recompute_priority(t->donee);
+    thread_recompute_priority(t->donee);
   } 
 }
 
@@ -676,5 +677,4 @@ void thread_donate_priority(struct thread *t) {
   intr_set_level(old_level);
   // Make t recompute its priority
   thread_recompute_priority(t);
-  printf("new %s pri: %d\n", t->name, t->priority);
 }

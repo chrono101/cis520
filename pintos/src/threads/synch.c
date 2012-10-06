@@ -235,9 +235,20 @@ lock_try_acquire (struct lock *lock)
 void
 lock_release (struct lock *lock) 
 {
-
   ASSERT (lock != NULL);
-  ASSERT (lock_held_by_current_thread (lock));
+  ASSERT (lock_held_by_current_thread (lock)); 
+  
+  enum intr_level old_level;
+
+  // the highest priority thread waiting for this lock should be unblocked
+  old_level = intr_disable ();
+  if (!list_empty(&lock->holder->donors)) {  
+    lock->holder->priority = lock->holder->original_priority;
+    struct thread *max = list_entry (list_max (&(lock->holder->donors), compare_threads_by_priority, NULL), struct thread, donor_elem);  
+    list_remove(list_max(&lock->holder->donors, compare_threads_by_priority, NULL));
+    thread_unblock(&max); 
+  }
+  intr_set_level (old_level);
 
   lock->holder = NULL;
   sema_up (&lock->semaphore);
@@ -253,7 +264,7 @@ lock_held_by_current_thread (const struct lock *lock)
 
   return lock->holder == thread_current ();
 }
-
+
 /* One semaphore in a list. */
 struct semaphore_elem 
   {
