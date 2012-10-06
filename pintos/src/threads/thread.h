@@ -95,8 +95,8 @@ struct thread
     struct semaphore wait_sema;         /* Semaphore for thread blocking */
     struct list_elem donor_elem;        /* List element for donor list */
     struct list donors;                 /* List of donors for this thread */
-    struct thread* donee;		            /* Thread you have donated to */ 
-    struct lock* want_lock; 		        /* Lock we want to acquire */
+    struct thread *donee;		         /* Thread you have donated to */ 
+    struct lock *want_lock; 		     /* Lock we want to acquire */
 
     /* Shared between thread.c and synch.c. */
     struct list_elem elem;              /* List element. */
