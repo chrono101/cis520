@@ -37,8 +37,6 @@ static struct thread *initial_thread;
 /* Lock used by allocate_tid(). */
 static struct lock tid_lock; 
 
-/* List of donors for this thread */
-struct list donors;
 
 /* Stack frame for kernel_thread(). */
 struct kernel_thread_frame 
@@ -95,7 +93,6 @@ thread_init (void)
   lock_init (&tid_lock);
   list_init (&ready_list);
   list_init (&all_list);
-  list_init (&donors);
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
@@ -378,7 +375,12 @@ thread_foreach (thread_action_func *func, void *aux)
 void
 thread_set_priority (int new_priority) 
 {
-  thread_current ()->priority = new_priority;
+  // Set the higher of either the new priority or the effective priority
+  if (new_priority > thread_current()->priority) {
+    thread_current ()->priority = new_priority;
+  }
+
+  // Set the new base priority
   thread_current ()->original_priority = new_priority;
 }
 
@@ -508,6 +510,7 @@ init_thread (struct thread *t, const char *name, int priority)
   t->magic = THREAD_MAGIC;
   list_push_back (&all_list, &t->allelem);
   sema_init(&t->wait_sema, 0);
+  list_init(&t->donors);
 }
 
 /* Allocates a SIZE-byte frame at the top of thread T's stack and
@@ -642,8 +645,12 @@ compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *
  */
 void thread_recompute_priority(struct thread *t) {
   int old_priority = t->priority; 
-  int donor_max = list_entry (list_max (&donors,compare_threads_by_priority, NULL), struct thread, elem)->priority;
+  struct thread *max = list_entry (list_max (&t->donors,compare_threads_by_priority, NULL), struct thread, elem);
+  int donor_max = max->priority;
 
+  printf("%s old pri: %d  %s pri: %d\n", t->name, old_priority, max->name, donor_max);
+
+  // Gets the max of t->original_priority and donor_max
   if (t->original_priority > donor_max) {
     t->priority = t->original_priority;
   } else {
@@ -653,4 +660,20 @@ void thread_recompute_priority(struct thread *t) {
   if (t->priority > old_priority && t->donee != NULL) {
      thread_recompute_priority(t->donee);
   } 
+}
+
+/* Donates the current thread's priority to thread t */
+void thread_donate_priority(struct thread *t) {
+  struct thread *cur = running_thread ();
+  enum intr_level old_level;
+
+  // Set our donee to t
+  cur->donee = t;
+  printf("%s set donee to: %s\n", cur->name, cur->donee->name);
+  // Add ourselves to t's donor list
+  list_push_back(&t->donors, &cur->donor_elem);
+  printf("%s added %s to its donors list\n", t->name, cur->name);
+  // Make t recompute its priority
+  thread_recompute_priority(t);
+  printf("new %s pri: %d\n", t->name, t->priority);
 }
