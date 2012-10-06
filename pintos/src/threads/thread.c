@@ -389,10 +389,7 @@ thread_set_priority (int new_priority)
   cur->original_priority = new_priority;
   
   struct thread *max = list_entry (list_max (&ready_list, compare_threads_by_priority, NULL), struct thread, elem);
-  //  list_remove(list_max(&ready_list, compare_threads_by_priority, NULL));
-  printf("cur %s priority %d; max %s priority %d\n",cur->name, cur->priority, max->name, max->priority);
-  if (cur != idle_thread  && cur->priority <= max->priority) {
-	printf("Calling thread yield to higher");
+  if (cur->priority <= max->priority) {
     thread_yield_to_higher_priority();
   }
 }
