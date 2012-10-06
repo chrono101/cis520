@@ -379,24 +379,16 @@ void
 thread_set_priority (int new_priority) 
 {
   struct thread* cur = thread_current();
- 
+
   // Set the higher of either the new priority or the effective priority
   if (new_priority > cur->priority) {
     cur->priority = new_priority;
   }
   // Set the new base priority
-<<<<<<< HEAD
-  thread_current ()->original_priority = new_priority;
-
- 
-=======
   cur->original_priority = new_priority;
-  
-  struct thread *max = list_entry (list_max (&ready_list, compare_threads_by_priority, NULL), struct thread, elem);
-  if (cur->priority <= max->priority) {
-    thread_yield_to_higher_priority();
-  }
->>>>>>> cc9ece52294c494224f007799c5a197b83c2ada3
+
+  thread_yield_to_higher_priority();
+
 }
 
 /* Returns the current thread's priority. */
@@ -656,8 +648,7 @@ compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *
   return (a->priority < b->priority);
 }
 
-/* Recomputes the priority for locking and such 
- */
+/* Recomputes the priority for locking and such  */
 void thread_recompute_priority(struct thread *t) {
   enum intr_level old_level;
   int old_priority = t->priority; 
