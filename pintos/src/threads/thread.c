@@ -92,13 +92,16 @@ thread_init (void)
 
   lock_init (&tid_lock);
   list_init (&ready_list);
-  list_init (&all_list);
+  list_init (&all_list);  
+ 
 
   /* Set up a thread structure for the running thread. */
   initial_thread = running_thread ();
   init_thread (initial_thread, "main", PRI_DEFAULT);
   initial_thread->status = THREAD_RUNNING;
-  initial_thread->tid = allocate_tid ();
+  initial_thread->tid = allocate_tid (); 
+  list_init(&initial_thread->donors);
+
 }
 
 /* Starts preemptive thread scheduling by enabling interrupts.
@@ -470,7 +473,7 @@ kernel_thread (thread_func *function, void *aux)
   function (aux);       /* Execute the thread function. */
   thread_exit ();       /* If function() returns, kill the thread. */
 }
-
+
 /* Returns the running thread. */
 struct thread *
 running_thread (void) 
@@ -644,17 +647,15 @@ compare_threads_by_priority(const struct list_elem *a_, const struct list_elem *
 /* Recomputes the priority for locking and such 
  */
 void thread_recompute_priority(struct thread *t) {
+  enum intr_level old_level;
   int old_priority = t->priority; 
-  struct thread *max = list_entry (list_max (&t->donors,compare_threads_by_priority, NULL), struct thread, elem);
-  int donor_max = max->priority;
+  struct thread *max = list_entry (list_max (&t->donors, compare_threads_by_priority, NULL), struct thread, donor_elem);  
 
-  printf("%s old pri: %d  %s pri: %d\n", t->name, old_priority, max->name, donor_max);
-
-  // Gets the max of t->original_priority and donor_max
-  if (t->original_priority > donor_max) {
+  // Gets the higher of t->original_priority and max->priority
+  if (t->original_priority > max->priority) {
     t->priority = t->original_priority;
   } else {
-    t->priority = donor_max;
+    t->priority = max->priority;
   }
 
   if (t->priority > old_priority && t->donee != NULL) {
@@ -669,10 +670,10 @@ void thread_donate_priority(struct thread *t) {
 
   // Set our donee to t
   cur->donee = t;
-  printf("%s set donee to: %s\n", cur->name, cur->donee->name);
-  // Add ourselves to t's donor list
-  list_push_back(&t->donors, &cur->donor_elem);
-  printf("%s added %s to its donors list\n", t->name, cur->name);
+  // Add ourselves to t's donor list, protected by an interrupt disable
+  old_level = intr_disable();
+  list_push_front(&t->donors, &cur->donor_elem);
+  intr_set_level(old_level);
   // Make t recompute its priority
   thread_recompute_priority(t);
   printf("new %s pri: %d\n", t->name, t->priority);
