@@ -269,7 +269,7 @@ thread_yield_to_higher_priority (void)
   enum intr_level old_level = intr_disable ();
   if (!list_empty (&ready_list)) {
     struct thread *cur = thread_current ();
-    struct thread *max = list_entry (list_max (&ready_list,compare_threads_by_priority, NULL), struct thread, elem);
+    struct thread *max = list_entry (list_max(&ready_list,compare_threads_by_priority, NULL), struct thread, elem);
     if (max->priority > cur->priority) {
       if (intr_context ()) {
         intr_yield_on_return ();
