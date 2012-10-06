@@ -200,7 +200,6 @@ lock_acquire (struct lock *lock)
   struct thread *cur = thread_current();
   
   if (lock->holder != NULL && cur->priority > lock->holder->priority) {
-    printf("%s[%d] wants a lock held by %s[%d]\n", cur->name, cur->priority, lock->holder->name, lock->holder->priority);
     thread_donate_priority(lock->holder);
   }
 
