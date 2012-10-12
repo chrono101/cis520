@@ -51,7 +51,6 @@ test_priority_fifo (void)
   lock_init (&lock);
 
   thread_set_priority (PRI_DEFAULT + 2);
-
   for (i = 0; i < THREAD_CNT; i++) 
     {
       char name[16];
@@ -69,7 +68,6 @@ test_priority_fifo (void)
   ASSERT (lock.holder == NULL);
 
   cnt = 0;
-
   for (; output < op; output++) 
     {
       struct simple_thread_data *d;
@@ -95,7 +93,6 @@ simple_thread_func (void *data_)
     {
       lock_acquire (data->lock);
       *(*data->op)++ = data->id;
-
       lock_release (data->lock);
       thread_yield ();
     }
