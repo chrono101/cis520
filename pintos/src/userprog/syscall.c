@@ -215,7 +215,8 @@ sys_open (const char *ufile)
 static struct file_descriptor *
 lookup_fd (int handle)
 {
-/* Add code to lookup file descriptor in the current thread's fds */
+  /* Add code to lookup file descriptor in the current thread's fds */
+  
   thread_exit ();
 }
  
@@ -223,7 +224,7 @@ lookup_fd (int handle)
 static int
 sys_filesize (int handle) 
 {
-/* Add code */
+  /* Add code */
   thread_exit ();
 }
  
@@ -231,7 +232,7 @@ sys_filesize (int handle)
 static int
 sys_read (int handle, void *udst_, unsigned size) 
 {
-/* Add code */
+  /* Add code */
   thread_exit ();
 }
  
@@ -295,7 +296,7 @@ sys_write (int handle, void *usrc_, unsigned size)
 static int
 sys_seek (int handle, unsigned position) 
 {
-/* Add code */
+  /* Add code */
   thread_exit ();
 }
  
@@ -303,7 +304,7 @@ sys_seek (int handle, unsigned position)
 static int
 sys_tell (int handle) 
 {
-/* Add code */
+  /* Add code */
   thread_exit ();
 }
  
@@ -311,7 +312,7 @@ sys_tell (int handle)
 static int
 sys_close (int handle) 
 {
-/* Add code */
+  /* Add code */
   thread_exit ();
 }
  
@@ -319,6 +320,6 @@ sys_close (int handle)
 void
 syscall_exit (void) 
 {
-/* Add code */
+  /* Add code */
   return;
 }

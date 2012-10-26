@@ -45,6 +45,11 @@ process_execute (const char *file_name)
   char *save_ptr;
   tid_t tid;
 
+  /* Parse the file_name into words,
+   * whose total length cannot exceed 4096b */
+
+  
+
   /* Initialize exec_info. */
   exec.file_name = file_name;
   sema_init (&exec.load_done, 0);
@@ -583,7 +588,7 @@ init_cmd_line (uint8_t *kpage, uint8_t *upage, const char *cmd_line,
     return false;
 
   /* Set initial stack pointer. */
-  *esp = upage + ofs;
+  *esp = (upage + ofs) - 12; // TODO: Fix this later
   return true;
 }
 
