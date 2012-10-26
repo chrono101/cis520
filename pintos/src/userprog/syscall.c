@@ -224,6 +224,16 @@ static int
 sys_filesize (int handle) 
 {
 /* Add code */
+  if (handle != STDOUT_FILENO)
+   {
+     fd = lookup_fd (handle);
+	if(fd!=-1)
+     	   {return (sizeof(fd->file));}
+	else
+	  { return 0;}
+   }
+  else
+   {   return 0;}
   thread_exit ();
 }
  
