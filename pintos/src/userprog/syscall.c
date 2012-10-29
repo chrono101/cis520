@@ -175,11 +175,11 @@ sys_remove (const char *ufile)
  
 /* A file descriptor, for binding a file handle to a file. */
 struct file_descriptor
-  {
-    struct list_elem elem;      /* List element. */
-    struct file *file;          /* File. */
-    int handle;                 /* File handle. */
-  };
+{
+  struct list_elem elem;      /* List element. */
+  struct file *file;          /* File. */
+  int handle;                 /* File handle. */
+};
  
 /* Open system call. */
 static int
@@ -215,8 +215,23 @@ sys_open (const char *ufile)
 static struct file_descriptor *
 lookup_fd (int handle)
 {
-  /* Add code to lookup file descriptor in the current thread's fds */
-  
+  struct file_descriptor *fd_return_value;
+  struct list_elem *e;
+  struct thread *cur = thread_current ();
+
+  // Iterate through the list of open files  
+  for (e = list_begin (&cur->fds); e != list_end (&cur->fds); e = list_next (e)) 
+  {
+    fd_return_value = list_entry (e, struct file_descriptor, elem);
+    // If we find one with a matchind handle, return that file descriptor
+    if (fd_return_value->handle == handle) 
+    {
+      return fd_return_value;
+    }
+
+  }
+
+  // Otherwise, kill the process
   thread_exit ();
 }
  
@@ -225,6 +240,7 @@ static int
 sys_filesize (int handle) 
 {
   if (handle != STDOUT_FILENO) {
+    struct file_descriptor *fd;
     fd = lookup_fd (handle);
     if(fd!=-1) {
       return (sizeof(fd->file));
@@ -243,8 +259,10 @@ sys_filesize (int handle)
 static int
 sys_read (int handle, void *udst_, unsigned size) 
 {
-  /* Add code */
-  thread_exit ();
+  // If handle is 0, read from keyboard
+  if (handle == 0) {
+    
+  }
 }
  
 /* Write system call. */
