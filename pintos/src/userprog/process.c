@@ -144,6 +144,7 @@ release_child (struct wait_status *cs)
 int
 process_wait (tid_t child_tid) 
 {
+  while(1){}
   return -1;
 }
 
