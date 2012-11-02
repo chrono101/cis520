@@ -149,7 +149,12 @@ page_fault (struct intr_frame *f)
   user = (f->error_code & PF_U) != 0;
 
   /* Handle bad dereferences from system call implementation. */
-
+  if (!user)
+  {
+	f->eip = (void (*) (void)) f->eax;
+	f->eax = 0;
+	return;
+  }
   /* add code */
 
 
