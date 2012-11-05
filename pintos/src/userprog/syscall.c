@@ -156,8 +156,20 @@ sys_exec (const char *ufile)
 static int
 sys_wait (tid_t child) 
 {
-/* Add code */
-  thread_exit ();
+  struct thread *cur = thread_current ();
+  struct list_elem *e;
+  int ret_exit_code;
+
+  for (e = list_begin(&cur->children); e != list_end(&cur->children); e = list_next(e)) {
+    struct wait_status *cs = list_entry(e, struct wait_status, elem);
+    if (child_tid == cs->tid) {
+      // block on child's semaphore
+      // grab exit code, ret_exit_code = cs->exit_code;
+      // free resources
+      return ret_exit_code;
+    }
+  }
+  return(-1);
 }
  
 /* Create system call. */
