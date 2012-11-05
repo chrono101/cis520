@@ -44,10 +44,12 @@ process_execute (const char *file_name)
   char thread_name[16];
   char *save_ptr;
   tid_t tid;
+  uint32_t *stack_page;
 
-  /* Parse the file_name into words,
-   * whose total length cannot exceed 4096b */
 
+  /* Load the stack from virtual memory */
+  //stack_page = lookup_page(, PHYS_BASE-1, false);
+  printf("Calling Process execute!\n"); // TODO: Remove when done
   
 
   /* Initialize exec_info. */
@@ -79,6 +81,8 @@ start_process (void *exec_)
   struct intr_frame if_;
   bool success;
 
+  printf("Calling start process!\n"); // TODO: Remove when done
+
   /* Initialize interrupt frame and load executable. */
   memset (&if_, 0, sizeof if_);
   if_.gs = if_.fs = if_.es = if_.ds = if_.ss = SEL_UDSEG;
@@ -109,6 +113,8 @@ start_process (void *exec_)
   sema_up (&exec->load_done);
   if (!success) 
     thread_exit ();
+
+  printf("Starting user process...\n"); // TODO: Remove when do
 
   /* Start the user process by simulating a return from an
      interrupt, implemented by intr_exit (in
@@ -297,6 +303,8 @@ load (const char *cmd_line, void (**eip) (void), void **esp)
   bool success = false;
   char *cp;
   int i;
+
+  printf("Calling load!\n"); // TODO: Remove me when done
 
   /* Allocate and activate page directory. */
   t->pagedir = pagedir_create ();
@@ -519,6 +527,7 @@ load_segment (struct file *file, off_t ofs, uint8_t *upage,
 static void
 reverse (int argc, char **argv) 
 {
+   printf("Calling reverse with argc=%d\n", argc);
    /* add code */
 
    return;
@@ -534,6 +543,9 @@ reverse (int argc, char **argv)
 static void *
 push (uint8_t *kpage, size_t *ofs, const void *buf, size_t size) 
 {
+  printf("Pushing buffer of size %d bytes onto stack. Contents of buffer:\n", size); // TODO: Remove me when done
+  hex_dump(0, buf, size, true);
+
   size_t padsize = ROUND_UP (size, sizeof (uint32_t));
   if (*ofs < padsize)
     return NULL;
@@ -558,6 +570,8 @@ init_cmd_line (uint8_t *kpage, uint8_t *upage, const char *cmd_line,
   int argc;
   char **argv;
 
+  printf("Calling init cmd line!\n"); // TODO: Remove me when done 
+
   /* Push a temporary working copy of the command line string. */
   cmd_line_copy = push (kpage, &ofs, cmd_line, strlen (cmd_line) + 1);
   if (cmd_line_copy == NULL)
@@ -577,6 +591,7 @@ init_cmd_line (uint8_t *kpage, uint8_t *upage, const char *cmd_line,
         return false;
       argc++;
     }
+  printf("Arguments: %d\n", argc); // TODO: Remove later
 
   /* Reverse the order of the command line arguments. */
   argv = (char **) (upage + ofs);
@@ -589,7 +604,7 @@ init_cmd_line (uint8_t *kpage, uint8_t *upage, const char *cmd_line,
     return false;
 
   /* Set initial stack pointer. */
-  *esp = (upage + ofs) - 12; // TODO: Fix this later
+  *esp = (upage + ofs); // TODO: Fix this later
   return true;
 }
 
@@ -601,6 +616,8 @@ setup_stack (const char *cmd_line, void **esp)
 {
   uint8_t *kpage;
   bool success = false;
+
+  printf("Calling setup_stack!\n"); // TODO: Remove me when done
 
   kpage = palloc_get_page (PAL_USER | PAL_ZERO);
   if (kpage != NULL) 
