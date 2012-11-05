@@ -38,6 +38,7 @@ static struct lock fs_lock;
 void
 syscall_init (void) 
 {
+  printf("************* SYSCALL_INIT **************\n");
   intr_register_int (0x30, 3, INTR_ON, syscall_handler, "syscall");
   lock_init (&fs_lock);
 }
@@ -189,6 +190,8 @@ sys_open (const char *ufile)
   struct file_descriptor *fd;
   int handle = -1;
  
+  printf("Opening file %s.\n", ufile);
+
   fd = malloc (sizeof *fd);
   if (fd != NULL)
     {
@@ -242,15 +245,15 @@ sys_filesize (int handle)
   if (handle != STDOUT_FILENO) {
     struct file_descriptor *fd;
     fd = lookup_fd (handle);
-    if(fd!=-1) {
-      return (sizeof(fd->file));
+    if(!fd->file) {
+      return file_length(fd->file);
     }
     else { 
-      return 0;
+      return -1;
     }
   }
   else {   
-    return 0;
+    return -1;
   }
   thread_exit ();
 }
@@ -259,10 +262,31 @@ sys_filesize (int handle)
 static int
 sys_read (int handle, void *udst_, unsigned size) 
 {
+  struct file *file;
+  unsigned i;
+  int retval;
+
+  retval = -1;
+  if (!is_user_vadd (udst_) || !is_user_vaddr (udst_ + size)) {
+    sys_exit (-1);
+  }
+
   // If handle is 0, read from keyboard
   if (handle == 0) {
-    
+    for (i = 0; i < size; i++) {
+      *(uint8_t *)(udst_ + i) = input_getc ();
+    }
+    retval = size;
+  } 
+  else {
+    file = lookup_fd(handle)->file;
+    if (file) {
+      lock_acquire (&fs_lock); // Lock the file system
+      retval = file_read(file, udst_, size);
+      lock_release (&fs_lock); // Release the lock once finished
+    }
   }
+  return retval;
 }
  
 /* Write system call. */
@@ -325,8 +349,14 @@ sys_write (int handle, void *usrc_, unsigned size)
 static int
 sys_seek (int handle, unsigned position) 
 {
-  /* Add code */
-  thread_exit ();
+  struct file *file;
+  
+  file = lookup_fd(handle)->file;
+  if (!file) {
+    return -1;
+  }
+  file_seek(file, position);
+  return 0;
 }
  
 /* Tell system call. */
