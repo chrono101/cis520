@@ -410,8 +410,11 @@ sys_seek (int handle, unsigned position)
 static int
 sys_tell (int handle) 
 {
-  /* Add code */
-  thread_exit ();
+  file = lookup_file(handle)->file;
+  if (!file) {
+    return -1;
+  }
+  return file_tell(file);
 }
  
 /* Close system call. */
