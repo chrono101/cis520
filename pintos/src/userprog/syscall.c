@@ -194,15 +194,16 @@ sys_wait (tid_t child)
   struct list_elem *e;
   int ret_exit_code;
 
-  for (e = list_begin(&cur->children); e != list_end(&cur->children); e = list_next(e)) {
+  /*for (e = list_begin(&cur->children); e != list_end(&cur->children); e = list_next(e)) {
     struct wait_status *cs = list_entry(e, struct wait_status, elem);
     if (child_tid == cs->tid) {
+      // TODO: Implement this stuff
       // block on child's semaphore
       // grab exit code, ret_exit_code = cs->exit_code;
       // free resources
       return ret_exit_code;
     }
-  }
+  }*/
   return(-1);
 }
  
