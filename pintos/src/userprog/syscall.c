@@ -417,8 +417,18 @@ sys_tell (int handle)
 static int
 sys_close (int handle) 
 {
-  /* Add code */
-  thread_exit ();
+  struct file_descriptor *fd = lookup_fd(handle);
+
+  if (fd->file != NULL) {
+    lock_acquire (&fs_lock); //I think we need to lock for file_close
+    file_close (fd->file); 
+    lock_release (&fs_lock);
+    list_remove (&fd->elem);
+    free(fd);
+  } else {
+    thread_exit();
+  }
+  return 0;
 }
  
 /* On thread exit, close all open files. */
